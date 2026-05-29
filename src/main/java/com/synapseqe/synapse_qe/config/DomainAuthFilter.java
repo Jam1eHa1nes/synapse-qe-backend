@@ -42,14 +42,12 @@ public class DomainAuthFilter extends OncePerRequestFilter {
                     if (host != null) {
                         String slug = extractSlugFromHost(host);
                         
-                        // For local development, allow 'localhost' without strict organization verification
-                        if (!"localhost".equals(slug) && !host.startsWith("127.0.0.1")) {
-                            boolean isAuthorized = verifyUserOrganization(userId, slug);
-                            if (!isAuthorized) {
-                                log.warn("User {} attempted to access unauthorized organization domain slug: {}", userId, slug);
-                                response.sendError(HttpServletResponse.SC_FORBIDDEN, "User does not have access to this domain's organization.");
-                                return;
-                            }
+                        // Check organization mapping
+                        boolean isAuthorized = verifyUserOrganization(userId, slug);
+                        if (!isAuthorized) {
+                            log.warn("User {} attempted to access unauthorized organization domain slug: {}", userId, slug);
+                            response.sendError(HttpServletResponse.SC_FORBIDDEN, "User does not have access to this domain's organization.");
+                            return;
                         }
                     }
                 } catch (Exception e) {
@@ -62,6 +60,10 @@ public class DomainAuthFilter extends OncePerRequestFilter {
     }
 
     private String extractSlugFromHost(String host) {
+        if ("localhost".equals(host) || host.startsWith("127.0.0.1")) {
+            return "qa"; // Map local testing directly to the QA organization
+        }
+        
         // e.g., prod.synapse-qa.co.uk -> prod
         String[] parts = host.split("\\.");
         if (parts.length > 0) {
@@ -74,8 +76,8 @@ public class DomainAuthFilter extends OncePerRequestFilter {
         String sql = """
             SELECT count(*) 
             FROM neon_auth.member m 
-            JOIN neon_auth.organization o ON m.organization_id = o.id 
-            WHERE m.user_id = ? AND o.slug = ?
+            JOIN neon_auth.organization o ON m."organizationId" = o.id 
+            WHERE m."userId" = ? AND o.slug = ?
         """;
         
         try {
