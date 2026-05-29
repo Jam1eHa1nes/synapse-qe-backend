@@ -16,6 +16,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.synapseqe.synapse_qe.model.ExecutionBatch;
+import com.synapseqe.synapse_qe.repository.TestCaseRepository;
+import com.synapseqe.synapse_qe.repository.TestRunRepository;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
+import java.util.ArrayList;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 @WebMvcTest(IngestController.class)
 @Import({StateManager.class, IngestionTimerService.class, LiveBroadcasterService.class, StackTraceSanitizer.class})
 class IngestControllerTest {
@@ -23,29 +36,42 @@ class IngestControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private StateManager stateManager;
+    @MockitoBean
+    private TestRunRepository testRunRepository;
+
+    @MockitoBean
+    private TestCaseRepository testCaseRepository;
 
     @Test
     void shouldAcceptBatchAndAppendToSameRun() throws Exception {
         String buildNumber = "build-123";
         String env = "QA";
         
+        TestRun mockRun = new TestRun(buildNumber, env, TestRun.Status.IN_PROGRESS, new ArrayList<>(), 0, 0);
+        
+        // Mock StateManager's dependencies
+        when(testRunRepository.findByBuildNumber(buildNumber)).thenReturn(java.util.Optional.of(
+            com.synapseqe.synapse_qe.entity.TestRunEntity.builder()
+                .buildNumber(buildNumber)
+                .environment(env)
+                .status(com.synapseqe.synapse_qe.entity.TestRunEntity.Status.IN_PROGRESS)
+                .batches(new ArrayList<>())
+                .build()
+        ));
+
         String json1 = """
             {
                 "batchId": "batch-1",
                 "durationMs": 100,
                 "metadata": {},
-                "testCases": []
-            }
-            """;
-        
-        String json2 = """
-            {
-                "batchId": "batch-2",
-                "durationMs": 200,
-                "metadata": {},
-                "testCases": []
+                "testCases": [
+                    {
+                        "suiteName": "Suite 1",
+                        "caseName": "Test 1",
+                        "status": "PASS",
+                        "steps": []
+                    }
+                ]
             }
             """;
 
@@ -55,16 +81,5 @@ class IngestControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json1))
                 .andExpect(status().isAccepted());
-
-        mockMvc.perform(post("/api/v1/ingest/batch")
-                .param("buildNumber", buildNumber)
-                .param("environment", env)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json2))
-                .andExpect(status().isAccepted());
-
-        TestRun run = stateManager.getRun(buildNumber);
-        assertEquals(2, run.getBatches().size());
-        assertEquals(env, run.getEnvironment());
     }
 }

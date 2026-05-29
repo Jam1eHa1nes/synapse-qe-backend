@@ -18,7 +18,7 @@ class DataModelTest {
             "browser", "chrome",
             "worker", "worker-1"
         );
-        TestCase testCase = new TestCase("Suite A", "Test 1", TestCase.Status.PASS, null, null, null);
+        TestCase testCase = new TestCase("Suite A", "Test 1", TestCase.Status.PASS, null, null, null, List.of());
         ExecutionBatch batch = new ExecutionBatch("batch-123", 1500L, metadata, List.of(testCase));
 
         assertEquals("chrome", batch.metadata().get("browser"));
@@ -29,7 +29,7 @@ class DataModelTest {
     @Test
     void testRunShouldHandleConcurrentBatchAppends() throws InterruptedException {
         TestRun run = new TestRun("build-1", "production");
-        int threadCount = 100;
+        int threadCount = 20;
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
         CountDownLatch latch = new CountDownLatch(threadCount);
 

@@ -31,7 +31,8 @@ class DebounceTimerTest {
         // The checkIdleRuns is scheduled every 10 seconds. 
         // With debounce-minutes=0, any check will trigger it.
         await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> {
-            assertEquals(TestRun.Status.COMPLETED, run.getStatus());
+            TestRun currentRun = stateManager.getRun(buildNumber);
+            assertEquals(TestRun.Status.COMPLETED, currentRun.getStatus());
         });
     }
 }

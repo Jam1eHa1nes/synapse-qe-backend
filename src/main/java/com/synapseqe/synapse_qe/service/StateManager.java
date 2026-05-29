@@ -4,9 +4,11 @@ import com.synapseqe.synapse_qe.dto.TestCaseHistoryDTO;
 import com.synapseqe.synapse_qe.entity.ExecutionBatchEntity;
 import com.synapseqe.synapse_qe.entity.TestCaseEntity;
 import com.synapseqe.synapse_qe.entity.TestRunEntity;
+import com.synapseqe.synapse_qe.entity.TestStepEntity;
 import com.synapseqe.synapse_qe.model.ExecutionBatch;
 import com.synapseqe.synapse_qe.model.TestCase;
 import com.synapseqe.synapse_qe.model.TestRun;
+import com.synapseqe.synapse_qe.model.TestStep;
 import com.synapseqe.synapse_qe.repository.TestCaseRepository;
 import com.synapseqe.synapse_qe.repository.TestRunRepository;
 import lombok.RequiredArgsConstructor;
@@ -164,7 +166,18 @@ public class StateManager {
                 TestCase.Status.valueOf(entity.getStatus().name()),
                 entity.getErrorMessage(),
                 entity.getRawStackTrace(),
-                entity.getErrorFingerprint()
+                entity.getErrorFingerprint(),
+                entity.getSteps().stream().map(this::mapToStepModel).collect(Collectors.toList())
+        );
+    }
+
+    private TestStep mapToStepModel(TestStepEntity entity) {
+        return new TestStep(
+                entity.getName(),
+                TestStep.Status.valueOf(entity.getStatus().name()),
+                entity.getDurationMs(),
+                entity.getErrorMessage(),
+                entity.getTimestamp()
         );
     }
 
@@ -185,7 +198,7 @@ public class StateManager {
     }
 
     private TestCaseEntity mapToCaseEntity(TestCase model, ExecutionBatchEntity batchEntity) {
-        return TestCaseEntity.builder()
+        TestCaseEntity entity = TestCaseEntity.builder()
                 .suiteName(model.suiteName())
                 .caseName(model.caseName())
                 .status(TestCaseEntity.Status.valueOf(model.status().name()))
@@ -193,6 +206,26 @@ public class StateManager {
                 .rawStackTrace(model.rawStackTrace())
                 .errorFingerprint(model.errorFingerprint())
                 .batch(batchEntity)
+                .build();
+
+        if (model.steps() != null) {
+            List<TestStepEntity> steps = model.steps().stream()
+                    .map(s -> mapToStepEntity(s, entity))
+                    .collect(Collectors.toList());
+            entity.setSteps(steps);
+        }
+        
+        return entity;
+    }
+
+    private TestStepEntity mapToStepEntity(TestStep model, TestCaseEntity caseEntity) {
+        return TestStepEntity.builder()
+                .name(model.name())
+                .status(TestStepEntity.Status.valueOf(model.status().name()))
+                .durationMs(model.durationMs())
+                .errorMessage(model.errorMessage())
+                .timestamp(model.timestamp())
+                .testCase(caseEntity)
                 .build();
     }
 }

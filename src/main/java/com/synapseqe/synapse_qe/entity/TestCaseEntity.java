@@ -3,6 +3,9 @@ package com.synapseqe.synapse_qe.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "test_cases")
 @Getter
@@ -33,6 +36,10 @@ public class TestCaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "batch_id")
     private ExecutionBatchEntity batch;
+
+    @OneToMany(mappedBy = "testCase", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<TestStepEntity> steps = new ArrayList<>();
 
     public enum Status {
         PASS, FAIL
