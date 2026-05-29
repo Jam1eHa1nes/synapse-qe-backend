@@ -18,7 +18,7 @@ class DataModelTest {
             "browser", "chrome",
             "worker", "worker-1"
         );
-        TestCase testCase = new TestCase("Suite A", "Test 1", TestCase.Status.PASS, null, null);
+        TestCase testCase = new TestCase("Suite A", "Test 1", TestCase.Status.PASS, null, null, null);
         ExecutionBatch batch = new ExecutionBatch("batch-123", 1500L, metadata, List.of(testCase));
 
         assertEquals("chrome", batch.metadata().get("browser"));

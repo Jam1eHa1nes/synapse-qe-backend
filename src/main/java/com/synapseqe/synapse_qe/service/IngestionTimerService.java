@@ -52,6 +52,7 @@ public class IngestionTimerService {
         TestRun run = stateManager.getRun(buildNumber);
         if (run != null && run.getStatus() == TestRun.Status.IN_PROGRESS) {
             run.setStatus(TestRun.Status.COMPLETED);
+            stateManager.saveRun(run);
             lastActivityMap.remove(buildNumber);
             log.info("Build {} marked as COMPLETED due to inactivity.", buildNumber);
         }

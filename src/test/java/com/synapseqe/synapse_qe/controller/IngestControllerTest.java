@@ -4,6 +4,7 @@ import com.synapseqe.synapse_qe.model.TestRun;
 import com.synapseqe.synapse_qe.service.IngestionTimerService;
 import com.synapseqe.synapse_qe.service.LiveBroadcasterService;
 import com.synapseqe.synapse_qe.service.StateManager;
+import com.synapseqe.synapse_qe.service.StackTraceSanitizer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -16,7 +17,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(IngestController.class)
-@Import({StateManager.class, IngestionTimerService.class, LiveBroadcasterService.class})
+@Import({StateManager.class, IngestionTimerService.class, LiveBroadcasterService.class, StackTraceSanitizer.class})
 class IngestControllerTest {
 
     @Autowired

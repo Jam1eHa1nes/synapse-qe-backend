@@ -1,29 +1,42 @@
 package com.synapseqe.synapse_qe.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class TestRun {
-    private final String buildNumber;
-    private final String environment;
+    private String buildNumber;
+    private String environment;
     private Status status = Status.IN_PROGRESS;
-    private final List<ExecutionBatch> batches = new CopyOnWriteArrayList<>();
+    private List<ExecutionBatch> batches = new ArrayList<>();
+    private long totalPass;
+    private long totalFail;
+
+    public TestRun(String buildNumber, String environment) {
+        this.buildNumber = buildNumber;
+        this.environment = environment;
+        this.batches = new ArrayList<>();
+        this.status = Status.IN_PROGRESS;
+    }
 
     public void addBatch(ExecutionBatch batch) {
         batches.add(batch);
+        updateTotals();
     }
 
-    public long getTotalPass() {
-        return batches.stream()
+    public void updateTotals() {
+        this.totalPass = batches.stream()
             .flatMap(b -> b.testCases().stream())
             .filter(t -> t.status() == TestCase.Status.PASS)
             .count();
-    }
 
-    public long getTotalFail() {
-        return batches.stream()
+        this.totalFail = batches.stream()
             .flatMap(b -> b.testCases().stream())
             .filter(t -> t.status() == TestCase.Status.FAIL)
             .count();
