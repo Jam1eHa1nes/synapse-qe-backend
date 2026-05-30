@@ -60,16 +60,27 @@ public class DomainAuthFilter extends OncePerRequestFilter {
     }
 
     private String extractSlugFromHost(String host) {
-        if ("localhost".equals(host) || host.startsWith("127.0.0.1")) {
-            return "qa"; // Map local testing directly to the QA organization
+        if (host == null) return "prod";
+        
+        if (host.equals("localhost") || host.startsWith("127.0.0.1")) {
+            return "qa";
         }
         
-        // e.g., prod.synapse-qa.co.uk -> prod
+        if (host.startsWith("qa.")) {
+            return "qa";
+        }
+        
+        // Handle production: synapse-qe.co.uk or www.synapse-qe.co.uk
+        if (host.equals("synapse-qe.co.uk") || host.equals("www.synapse-qe.co.uk")) {
+            return "prod";
+        }
+
+        // Fallback for Vercel preview URLs or other variations
         String[] parts = host.split("\\.");
         if (parts.length > 0) {
             return parts[0];
         }
-        return host;
+        return "prod";
     }
 
     private boolean verifyUserOrganization(String userId, String slug) {
